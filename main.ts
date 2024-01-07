@@ -10,8 +10,14 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: 'default'
 }
 
-export default class MyPlugin extends Plugin {
+
+
+export default class BacklinkPlugin extends Plugin {
 	settings: MyPluginSettings;
+
+
+
+
 
 	async onload() {
 		await this.loadSettings();
@@ -36,6 +42,13 @@ export default class MyPlugin extends Plugin {
 				new SampleModal(this.app).open();
 			}
 		});
+
+		//
+
+		
+
+
+		//
 		// This adds an editor command that can perform some operation on the current editor instance
 		this.addCommand({
 			id: 'sample-editor-command',
@@ -76,7 +89,60 @@ export default class MyPlugin extends Plugin {
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
 		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+
+
+		this.registerEvent(
+            this.app.vault.on('create', (file) => {
+                // Check if the file is a markdown file
+                if (file instanceof TFile && file.extension === 'md') {
+                    this.insertBacklinkName(file);
+                }
+            })
+        );
+
+
+
+
 	}
+
+	async insertBacklinkName(file) {
+        // Delay to ensure that the backlink index is updated
+        await this.wait(1000);
+
+        // Get backlinks to the file
+        const backlinks = this.app.metadataCache.getBacklinksForFile(file);
+
+        // Check if the file was created by clicking a non-existent link
+        // This part of the logic might need adjustment or a different approach
+        // depending on the Obsidian API capabilities
+        if (this.isFileCreatedByNonExistentLink(file)) {
+            // Get the name of the first backlink
+            const firstBacklink = Object.keys(backlinks)[0];
+
+            // Open the file and insert the text
+            const editor = this.app.workspace.getActiveFile()
+
+			// try and edit this file to add what you want to add.
+
+
+            editor.setValue(`[[${firstBacklink}]]\n` + editor.getValue());
+
+        }
+    }
+
+
+	isFileCreatedByNonExistentLink(file) {
+        // Logic to determine if the file was created by clicking a non-existent link
+        // This is a placeholder and needs proper implementation
+        return true;
+    }
+
+	wait(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+
+	
 
 	onunload() {
 
@@ -108,9 +174,9 @@ class SampleModal extends Modal {
 }
 
 class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+	plugin: BacklinkPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: BacklinkPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
